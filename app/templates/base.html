@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>HealthApp</title>
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('index') }}">HealthApp</a> |
+        {% if session.user_id %}
+            Logged in as user {{ session.user_id }} ({{ session.role }}) |
+            <a href="{{ url_for('auth.logout') }}">Log out</a>
+        {% else %}
+            <a href="{{ url_for('auth.login') }}">Log in</a> |
+            <a href="{{ url_for('auth.register') }}">Register</a>
+        {% endif %}
+    </nav>
+    <hr>
+
+    {% if error %}
+        <p><strong>{{ error }}</strong></p>
+    {% endif %}
+
+    {% block content %}
+        <p>Clinic portal.</p>
+    {% endblock %}
+</body>
+</html>

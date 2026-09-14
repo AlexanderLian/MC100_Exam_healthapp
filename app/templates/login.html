@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Log in</h1>
+    <form method="post" action="{{ url_for('auth.login') }}">
+        <p>
+            <label for="email">Email</label><br>
+            <input type="email" id="email" name="email" value="{{ email or '' }}" required>
+        </p>
+        <p>
+            <label for="password">Password</label><br>
+            <input type="password" id="password" name="password" autocomplete="current-password" required>
+        </p>
+        <button type="submit">Log in</button>
+    </form>
+{% endblock %}

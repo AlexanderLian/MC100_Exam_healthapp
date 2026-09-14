@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Register as a patient</h1>
+    <form method="post" action="{{ url_for('auth.register') }}">
+        <p>
+            <label for="email">Email</label><br>
+            <input type="email" id="email" name="email" value="{{ email or '' }}" required>
+        </p>
+        <p>
+            <label for="full_name">Full name</label><br>
+            <input type="text" id="full_name" name="full_name" value="{{ full_name or '' }}" required>
+        </p>
+        <p>
+            <label for="password">Password (8-72 characters, fewer if you use æ ø å)</label><br>
+            <input type="password" id="password" name="password" autocomplete="new-password" required>
+        </p>
+        <p>
+            <label for="national_id">National ID (11 digits)</label><br>
+            <input type="text" id="national_id" name="national_id" inputmode="numeric" required>
+        </p>
+        <button type="submit">Register</button>
+    </form>
+{% endblock %}
