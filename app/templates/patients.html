@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>My patients</h1>
+    {% if patients %}
+        <ul>
+            {% for patient in patients %}
+                <li><a href="{{ url_for('notes.patient_notes', patient_id=patient['id']) }}">{{ patient['full_name'] }}</a></li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>You have no patients with appointments.</p>
+    {% endif %}
+{% endblock %}

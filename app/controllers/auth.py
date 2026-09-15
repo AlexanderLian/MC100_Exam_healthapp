@@ -1,11 +1,47 @@
+import functools
+import logging
 import re
 import sqlite3
 
-from flask import Blueprint, render_template, request, redirect, url_for, session
+from flask import Blueprint, render_template, request, redirect, url_for, session, abort
 
 from app import models
 
 auth = Blueprint('auth', __name__)
+
+security_log = logging.getLogger('healthapp.security')
+
+
+# raises, so nothing after a deny() call runs
+def deny(patient_id=None):
+    # ids and route only, never the note text
+    security_log.warning('access denied user_id=%s role=%s route=%s %s patient_id=%s',
+                         session.get('user_id'), session.get('role'), request.method, request.path, patient_id)
+    # 404 not 403, or an attacker learns which records exist
+    abort(404)
+
+
+def login_required(view):
+    @functools.wraps(view)
+    def wrapped(*args, **kwargs):
+        if 'user_id' not in session:
+            return render_template('login.html', error='Log in to see this page.'), 401
+        return view(*args, **kwargs)
+    return wrapped
+
+
+def role_required(role):
+    def decorator(view):
+        # includes the login check, so stacking the two in the wrong order cannot turn a 401 into a 404
+        @functools.wraps(view)
+        @login_required
+        def wrapped(*args, **kwargs):
+            # exact match, admin is a separate set of permissions and not a higher one
+            if session.get('role') != role:
+                deny(kwargs.get('patient_id'))
+            return view(*args, **kwargs)
+        return wrapped
+    return decorator
 
 
 @auth.route('/register', methods=['GET', 'POST'])

@@ -98,6 +98,72 @@ def verify_login(email, password):
     return None
 
 
+def get_patients_for_clinician(clinician_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    # DISTINCT, because a patient with two appointments would otherwise be listed twice
+    cursor.execute('''
+        SELECT DISTINCT u.id, u.full_name FROM users u
+          JOIN appointments ap ON ap.patient_id = u.id
+         WHERE ap.clinician_id = ?
+         ORDER BY u.full_name
+    ''', (clinician_id,))
+    patients = cursor.fetchall()
+    conn.close()
+    return patients
+
+
+# None means no appointment links them, and the route cannot tell that apart from no such patient
+def get_linked_patient(patient_id, clinician_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT u.id, u.full_name FROM users u
+         WHERE u.id = ? AND u.role = 'patient'
+           AND EXISTS (SELECT 1 FROM appointments ap
+                        WHERE ap.patient_id = u.id AND ap.clinician_id = ?)
+    ''', (patient_id, clinician_id))
+    patient = cursor.fetchone()
+    conn.close()
+    return patient
+
+
+# takes the clinician's id, so no code path reads a note without an identity
+def get_notes_for_clinician(patient_id, clinician_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    # EXISTS not JOIN, because a JOIN returns every note once per appointment
+    cursor.execute('''
+        SELECT n.id, n.body, n.created_at, author.full_name AS author_name FROM notes n
+          JOIN users author ON author.id = n.clinician_id
+         WHERE n.patient_id = ?
+           AND EXISTS (SELECT 1 FROM appointments ap
+                        WHERE ap.patient_id = n.patient_id AND ap.clinician_id = ?)
+         ORDER BY n.created_at DESC, n.id DESC
+    ''', (patient_id, clinician_id))
+    notes = cursor.fetchall()
+    conn.close()
+    return notes
+
+
+# check and write in one statement, so an appointment cannot disappear between them
+def create_note(patient_id, clinician_id, body):
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO notes (patient_id, clinician_id, body)
+            SELECT ?, ?, ?
+             WHERE EXISTS (SELECT 1 FROM appointments
+                            WHERE patient_id = ? AND clinician_id = ?)
+        ''', (patient_id, clinician_id, body, patient_id, clinician_id))
+        conn.commit()
+        written = cursor.rowcount == 1
+    finally:
+        conn.close()
+    return written
+
+
 # replaces admin account management, no graded task needs user CRUD routes
 def seed():
     password = os.environ.get('SEED_PASSWORD')

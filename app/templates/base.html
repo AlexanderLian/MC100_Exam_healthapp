@@ -8,6 +8,9 @@
     <nav>
         <a href="{{ url_for('index') }}">HealthApp</a> |
         {% if session.user_id %}
+            {% if session.role == 'clinician' %}
+                <a href="{{ url_for('notes.patient_list') }}">My patients</a> |
+            {% endif %}
             Logged in as user {{ session.user_id }} ({{ session.role }}) |
             <a href="{{ url_for('auth.logout') }}">Log out</a>
         {% else %}

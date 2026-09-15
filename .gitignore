@@ -7,3 +7,4 @@ uploads/*
 *.db
 instance/
 .pytest_cache/
+*.log

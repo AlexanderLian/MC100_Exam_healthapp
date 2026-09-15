@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Journal notes for {{ patient['full_name'] }}</h1>
+    <p><a href="{{ url_for('notes.patient_list') }}">Back to my patients</a></p>
+
+    <form method="post" action="{{ url_for('notes.patient_notes', patient_id=patient['id']) }}">
+        <p>
+            <label for="body">New note</label><br>
+            <textarea id="body" name="body" rows="6" cols="60" maxlength="5000" required>{{ body or '' }}</textarea>
+        </p>
+        <button type="submit">Save note</button>
+    </form>
+
+    {% if notes %}
+        {% for note in notes %}
+            <hr>
+            <p><small>{{ note['created_at'] }} UTC, {{ note['author_name'] }}</small></p>
+            <p>{{ note['body'] }}</p>
+        {% endfor %}
+    {% else %}
+        <p>No notes yet.</p>
+    {% endif %}
+{% endblock %}
