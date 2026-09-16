@@ -4,33 +4,30 @@
     <h1>Book an appointment</h1>
 
     <form method="post" action="{{ url_for('appointments.book') }}">
-        <p>
-            <label for="clinician_id">Clinician</label><br>
+        <label>Clinician
             <select id="clinician_id" name="clinician_id" required>
                 {% for clinician in clinicians %}
                     <option value="{{ clinician['id'] }}">{{ clinician['full_name'] }}</option>
                 {% endfor %}
             </select>
-        </p>
-        <p>
-            <label for="slot_start">Time</label><br>
-            <select id="slot_start" name="slot_start" required>
+        </label>
+        <label>Time
+            <select id="slot_start" name="slot_start" class="mono" required>
                 {% for slot in slots %}
                     <option value="{{ slot }}">{{ slot }}</option>
                 {% endfor %}
             </select>
-        </p>
+        </label>
         <button type="submit">Book</button>
     </form>
 
     <h2>Your appointments</h2>
-    {% if appointments %}
-        <ul>
-            {% for appointment in appointments %}
-                <li>{{ appointment['slot_start'] }} with {{ appointment['full_name'] }}</li>
-            {% endfor %}
-        </ul>
+    {% for appointment in appointments %}
+        <div class="row">
+            <span class="mono">{{ appointment['slot_start'] }}</span>
+            <span>{{ appointment['full_name'] }}</span>
+        </div>
     {% else %}
-        <p>You have no appointments.</p>
-    {% endif %}
+        <p class="muted">You have no appointments.</p>
+    {% endfor %}
 {% endblock %}

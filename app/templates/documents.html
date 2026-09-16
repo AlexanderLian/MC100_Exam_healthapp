@@ -4,25 +4,21 @@
     <h1>My documents</h1>
 
     <form method="post" action="{{ url_for('documents.document_list') }}" enctype="multipart/form-data">
-        <p>
-            <label for="document">Referral or other document</label><br>
+        <label>Referral or other document
             <input type="file" id="document" name="document" required>
-        </p>
-        <button type="submit">Upload</button>
+        </label>
+        <button type="submit" class="secondary">Upload</button>
     </form>
 
-    {% if documents %}
-        <ul>
-            {% for document in documents %}
-                <li>
-                    <a href="{{ url_for('documents.download', document_id=document['id']) }}">{{ document['original_name'] }}</a>
-                    ({{ document['size_bytes'] }} bytes, {{ document['uploaded_at'] }})
-                </li>
-            {% endfor %}
-        </ul>
+    <h2>Files</h2>
+    {% for document in documents %}
+        <div class="row">
+            <a href="{{ url_for('documents.download', document_id=document['id']) }}">{{ document['original_name'] }}</a>
+            <span class="mono muted">{{ document['size_bytes'] }} bytes, {{ document['uploaded_at'] }}</span>
+        </div>
     {% else %}
-        <p>You have no documents.</p>
-    {% endif %}
+        <p class="muted">You have no documents.</p>
+    {% endfor %}
 
-    <p>Your clinicians can read these. Nobody else can.</p>
+    <p class="muted">Your clinicians can read these. Nobody else can.</p>
 {% endblock %}

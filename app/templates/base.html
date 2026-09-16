@@ -2,36 +2,52 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>HealthApp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <nav>
-        <a href="{{ url_for('index') }}">HealthApp</a> |
-        {% if session.user_id %}
-            {% if session.role == 'clinician' %}
-                <a href="{{ url_for('notes.patient_list') }}">My patients</a> |
-            {% endif %}
-            {% if session.role == 'patient' %}
-                <a href="{{ url_for('appointments.book') }}">Book appointment</a> |
-                <a href="{{ url_for('documents.document_list') }}">My documents</a> |
-            {% endif %}
-            <a href="{{ url_for('assistant.ask') }}">Assistant</a> |
-            <a href="{{ url_for('auth.api_tokens') }}">API token</a> |
-            Logged in as user {{ session.user_id }} ({{ session.role }}) |
-            <a href="{{ url_for('auth.logout') }}">Log out</a>
-        {% else %}
-            <a href="{{ url_for('auth.login') }}">Log in</a> |
-            <a href="{{ url_for('auth.register') }}">Register</a>
-        {% endif %}
-    </nav>
-    <hr>
+    <div class="page">
+        <div class="topbar">
+            <nav>
+                <a class="brand" href="{{ url_for('index') }}">HealthApp</a>
+                {% if session.user_id %}
+                    {% if session.role == 'clinician' %}
+                        <a href="{{ url_for('notes.patient_list') }}"
+                           class="{{ 'active' if request.endpoint in ('notes.patient_list', 'notes.patient_notes') }}">Patients</a>
+                    {% endif %}
+                    {% if session.role == 'patient' %}
+                        <a href="{{ url_for('appointments.book') }}"
+                           class="{{ 'active' if request.endpoint == 'appointments.book' }}">Appointments</a>
+                        <a href="{{ url_for('documents.document_list') }}"
+                           class="{{ 'active' if request.endpoint == 'documents.document_list' }}">Documents</a>
+                    {% endif %}
+                    <a href="{{ url_for('assistant.ask') }}"
+                       class="{{ 'active' if request.endpoint == 'assistant.ask' }}">Assistant</a>
+                    <a href="{{ url_for('auth.api_tokens') }}"
+                       class="{{ 'active' if request.endpoint == 'auth.api_tokens' }}">API token</a>
+                {% endif %}
+            </nav>
+            <nav class="user">
+                {% if session.user_id %}
+                    <span>Logged in as {{ session.role }}</span>
+                    <a href="{{ url_for('auth.logout') }}">Log out</a>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}">Log in</a>
+                    <a href="{{ url_for('auth.register') }}">Register</a>
+                {% endif %}
+            </nav>
+        </div>
 
-    {% if error %}
-        <p><strong>{{ error }}</strong></p>
-    {% endif %}
+        <main class="{% block main_class %}{% endblock %}">
+            {% if error %}
+                <p class="error"><strong>{{ error }}</strong></p>
+            {% endif %}
 
-    {% block content %}
-        <p>Clinic portal.</p>
-    {% endblock %}
+            {% block content %}
+                <p>Clinic portal.</p>
+            {% endblock %}
+        </main>
+    </div>
 </body>
 </html>

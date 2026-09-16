@@ -4,18 +4,23 @@
     <h1>API token</h1>
 
     {% if new_token %}
-        <p>New API token: {{ new_token }}</p>
-        <p>Copy it now. It is not shown again.</p>
+        <div class="token">
+            <p class="mono">New API token: {{ new_token }}</p>
+            <p>Copy it now. It is not shown again.</p>
+            <form method="post" action="{{ url_for('auth.revoke_api_token') }}">
+                <button type="submit" class="secondary">Revoke token</button>
+            </form>
+        </div>
     {% elif token_row %}
-        <p>Token: {{ token_row['token_prefix'] }}**** (expires {{ token_row['expires_at'] }})</p>
+        <h2>Active token</h2>
+        <div class="row">
+            <span class="mono">{{ token_row['token_prefix'] }}**** <span class="muted">expires {{ token_row['expires_at'] }}</span></span>
+            <form method="post" action="{{ url_for('auth.revoke_api_token') }}">
+                <button type="submit" class="secondary">Revoke token</button>
+            </form>
+        </div>
     {% else %}
-        <p>You have no API token.</p>
-    {% endif %}
-
-    {% if token_row %}
-        <form method="post" action="{{ url_for('auth.revoke_api_token') }}">
-            <button type="submit">Revoke token</button>
-        </form>
+        <p class="muted">You have no API token.</p>
     {% endif %}
 
     <form method="post" action="{{ url_for('auth.api_tokens') }}">
@@ -23,10 +28,10 @@
     </form>
 
     {% if session.role == 'patient' %}
-        <p>A patient token reads your own appointments.</p>
+        <p class="muted">A patient token reads your own appointments.</p>
     {% elif session.role == 'clinician' %}
-        <p>A clinician token reads your patients and their journal notes, and writes new notes.</p>
+        <p class="muted">A clinician token reads your patients and their journal notes, and writes new notes.</p>
     {% else %}
-        <p>An administrator token reaches no clinical data.</p>
+        <p class="muted">An administrator token reaches no clinical data.</p>
     {% endif %}
 {% endblock %}

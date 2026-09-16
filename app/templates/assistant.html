@@ -3,19 +3,19 @@
 {% block content %}
     <h1>Information assistant</h1>
 
-    <p>General questions only. The assistant cannot see your records.</p>
+    <p class="muted">General questions only. The assistant cannot see your records.</p>
 
     <form method="post" action="{{ url_for('assistant.ask') }}">
-        <p>
-            <label for="question">Your question</label><br>
-            <textarea id="question" name="question" rows="4" cols="60" maxlength="500" required>{{ question or '' }}</textarea>
-        </p>
+        <label>Your question
+            <textarea id="question" name="question" rows="3" maxlength="500" required>{{ question or '' }}</textarea>
+        </label>
         <button type="submit">Send</button>
     </form>
 
     {% if answer %}
-        <h2>Answer</h2>
-        <p>{{ answer }}</p>
-        <p><small>Written by a language model.</small></p>
+        <div class="answer">
+            <p>{{ answer }}</p>
+            <p class="mono muted">Written by a language model.</p>
+        </div>
     {% endif %}
 {% endblock %}

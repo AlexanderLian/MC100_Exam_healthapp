@@ -5,8 +5,9 @@ from itsdangerous import TimestampSigner
 
 from app import models
 
-# only shown to logged-out users, so a crashing page cannot pass for a logged-out one
+# each link only shows in one state, so a crashing page cannot pass for either
 LOGGED_OUT_LINK = 'href="/register"'
+LOGGED_IN_LINK = 'href="/logout"'
 
 
 def error_message(response):
@@ -15,7 +16,7 @@ def error_message(response):
 
 def test_login_sets_session_for_correct_password(client, login):
     login('clinician1')
-    assert 'Logged in as user' in client.get('/').get_data(as_text=True)
+    assert LOGGED_IN_LINK in client.get('/').get_data(as_text=True)
 
 
 def test_wrong_password_and_unknown_email_get_same_message(login):
