@@ -15,6 +15,7 @@
                 <a href="{{ url_for('appointments.book') }}">Book appointment</a> |
                 <a href="{{ url_for('documents.document_list') }}">My documents</a> |
             {% endif %}
+            <a href="{{ url_for('assistant.ask') }}">Assistant</a> |
             <a href="{{ url_for('auth.api_tokens') }}">API token</a> |
             Logged in as user {{ session.user_id }} ({{ session.role }}) |
             <a href="{{ url_for('auth.logout') }}">Log out</a>

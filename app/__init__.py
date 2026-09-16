@@ -8,6 +8,7 @@ from flask import Flask, render_template
 from app import models
 from app.controllers.api import api
 from app.controllers.appointments import appointments
+from app.controllers.assistant import assistant
 from app.controllers.auth import auth
 from app.controllers.documents import documents
 from app.controllers.notes import notes
@@ -30,7 +31,7 @@ def create_app():
     app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() in ('1', 'true', 'yes')
     # Flask rejects a cookie older than this, so a copied one stops working after 30 idle minutes
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
-    # lab_3 has no limit, so one upload could fill the disk. Flask refuses the request before reading it
+    # Flask refuses a bigger request before reading it, so one upload cannot fill the disk
     app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
     security_log = logging.getLogger('healthapp.security')
@@ -48,6 +49,7 @@ def create_app():
     app.register_blueprint(api)
     app.register_blueprint(appointments)
     app.register_blueprint(documents)
+    app.register_blueprint(assistant)
 
     @app.route('/')
     def index():
