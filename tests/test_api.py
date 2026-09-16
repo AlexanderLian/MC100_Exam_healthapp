@@ -6,6 +6,7 @@ import app as app_package
 from app import models
 
 PATIENTS_URL = '/api/patients'
+APPOINTMENTS_URL = '/api/appointments'
 
 
 def user_id(name):
@@ -103,6 +104,28 @@ def test_patient_token_cannot_list_patients(client, login):
     refused = client.get(PATIENTS_URL, headers=header(patient)).status_code
     # the patient list has no appointment check of its own, so only the role check stops this
     assert (refused, client.get(PATIENTS_URL, headers=header(clinician)).status_code) == (404, 200)
+
+
+def test_patient_token_reads_own_appointments(client, login):
+    token = api_token(client, login, 'patient1')
+    response = client.get(APPOINTMENTS_URL, headers=header(token))
+    # the seeded appointment is with Kari Lege
+    assert response.status_code == 200 and 'Kari Lege' in response.get_data(as_text=True)
+
+
+def test_appointments_show_only_the_token_owners_own(client, login):
+    models.book_appointment(user_id('patient2'), user_id('clinician2'), models.available_slots()[0])
+    token = api_token(client, login, 'patient1')
+    page = client.get(APPOINTMENTS_URL, headers=header(token)).get_data(as_text=True)
+    # patient1 keeps their own appointment and never sees patient2's clinician
+    assert 'Kari Lege' in page and 'Ola Lege' not in page
+
+
+def test_clinician_token_cannot_read_appointments(client, login):
+    clinician = api_token(client, login, 'clinician1')
+    patient = api_token(client, login, 'patient1')
+    refused = client.get(APPOINTMENTS_URL, headers=header(clinician)).status_code
+    assert (refused, client.get(APPOINTMENTS_URL, headers=header(patient)).status_code) == (404, 200)
 
 
 def test_api_note_is_written_as_token_owner(client, login):
