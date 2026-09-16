@@ -84,6 +84,19 @@ CREATE TABLE IF NOT EXISTS reset_tokens (
 );
 
 
+-- One token per user, so regenerating replaces the row (Assignment 2 works the
+-- same way). Only the hash is stored, like reset_tokens. token_prefix is the
+-- first 4 characters, kept so the page can show 85a4**** without holding the
+-- token itself.
+CREATE TABLE IF NOT EXISTS api_tokens (
+    user_id      INTEGER PRIMARY KEY REFERENCES users(id),
+    token_hash   TEXT    NOT NULL UNIQUE,
+    token_prefix TEXT    NOT NULL,
+    created_at   TEXT    NOT NULL DEFAULT (datetime('now')),
+    expires_at   TEXT    NOT NULL
+);
+
+
 CREATE INDEX IF NOT EXISTS idx_appointments_pair ON appointments (clinician_id, patient_id);
 CREATE INDEX IF NOT EXISTS idx_notes_patient     ON notes (patient_id);
 CREATE INDEX IF NOT EXISTS idx_documents_owner   ON documents (owner_id);
