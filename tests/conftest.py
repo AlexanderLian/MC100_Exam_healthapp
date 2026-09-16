@@ -4,6 +4,7 @@ import pytest
 
 import app as app_package
 from app import create_app, models
+from app.limiter import limiter
 
 SEED_PASSWORD = 'test seed password'
 
@@ -29,7 +30,10 @@ def app(tmp_path, monkeypatch):
         handler.close()
 
     models.init_db()
-    yield create_app()
+    app = create_app()
+    # the counts live in memory for the whole run, so one test would otherwise use up the next one's limit
+    limiter.reset()
+    yield app
 
     # close the file so Windows can delete the temp folder
     for handler in list(security_log.handlers):

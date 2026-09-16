@@ -5,8 +5,11 @@ from flask import Blueprint, jsonify, request, g
 
 from app import models
 from app.controllers.notes import MAX_NOTE_LENGTH
+from app.limiter import limiter
 
 api = Blueprint('api', __name__)
+# one count for the whole api, so a stolen token cannot get 60 calls on every endpoint
+limiter.shared_limit('60 per minute', scope='api')(api)
 
 security_log = logging.getLogger('healthapp.security')
 

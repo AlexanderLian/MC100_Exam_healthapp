@@ -3,7 +3,7 @@ import os
 import time
 from datetime import timedelta
 
-from flask import Flask, render_template
+from flask import Flask, jsonify, render_template, request, session
 
 from app import models
 from app.controllers.api import api
@@ -12,6 +12,7 @@ from app.controllers.assistant import assistant
 from app.controllers.auth import auth
 from app.controllers.documents import documents
 from app.controllers.notes import notes
+from app.limiter import limiter
 
 SECURITY_LOG = os.path.join(models.BASE_DIR, 'security.log')
 
@@ -44,12 +45,23 @@ def create_app():
         handler.setFormatter(formatter)
         security_log.addHandler(handler)
 
+    limiter.init_app(app)
+
     app.register_blueprint(auth)
     app.register_blueprint(notes)
     app.register_blueprint(api)
     app.register_blueprint(appointments)
     app.register_blueprint(documents)
     app.register_blueprint(assistant)
+
+    @app.errorhandler(429)
+    def too_many_requests(error):
+        # %r escapes a newline, so a url can never add a fake line to the log
+        security_log.warning('rate limit hit user_id=%s route=%s %r',
+                             session.get('user_id'), request.method, request.path)
+        if request.path.startswith('/api/'):
+            return jsonify({'error': 'Too many requests'}), 429
+        return error
 
     @app.route('/')
     def index():

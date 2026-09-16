@@ -5,6 +5,7 @@ from werkzeug.utils import secure_filename
 
 from app import models
 from app.controllers.auth import login_required, role_required, deny
+from app.limiter import limiter
 
 documents = Blueprint('documents', __name__)
 
@@ -14,6 +15,7 @@ def documents_page(error=None):
 
 
 @documents.route('/documents', methods=['GET', 'POST'])
+@limiter.limit('10 per minute', methods=['POST'])
 @role_required('patient')
 def document_list():
     if request.method == 'GET':

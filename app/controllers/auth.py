@@ -6,6 +6,7 @@ import sqlite3
 from flask import Blueprint, render_template, request, redirect, url_for, session, abort
 
 from app import models
+from app.limiter import limiter
 
 auth = Blueprint('auth', __name__)
 
@@ -45,6 +46,7 @@ def role_required(role):
 
 
 @auth.route('/register', methods=['GET', 'POST'])
+@limiter.limit('3 per minute', methods=['POST'])
 def register():
     if request.method == 'GET':
         return render_template('register.html')
@@ -85,6 +87,8 @@ def register():
 
 
 @auth.route('/login', methods=['GET', 'POST'])
+# bcrypt makes each guess slow, this caps how many guesses there are
+@limiter.limit('5 per minute', methods=['POST'])
 def login():
     if request.method == 'GET':
         return render_template('login.html')
@@ -106,6 +110,7 @@ def login():
 
 
 @auth.route('/forgot-password', methods=['GET', 'POST'])
+@limiter.limit('3 per minute', methods=['POST'])
 def forgot_password():
     if request.method == 'GET':
         return render_template('forgot_password.html')
@@ -122,6 +127,7 @@ def forgot_password():
 
 
 @auth.route('/reset-password', methods=['GET', 'POST'])
+@limiter.limit('5 per minute', methods=['POST'])
 def reset_password():
     if request.method == 'GET':
         return render_template('reset_password.html')

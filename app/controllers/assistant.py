@@ -1,12 +1,12 @@
 import logging
 import os
 import re
-import time
 
 from flask import Blueprint, render_template, request, session
 from openai import OpenAI
 
 from app.controllers.auth import login_required
+from app.limiter import limiter, account_key
 
 assistant = Blueprint('assistant', __name__)
 
@@ -15,7 +15,6 @@ security_log = logging.getLogger('healthapp.security')
 # a cap on what one question can cost
 MAX_QUESTION = 500
 MAX_ANSWER = 2000
-MAX_PER_MINUTE = 5
 
 # a chat model by name, the free routing pools can land on one that only labels content
 DEFAULT_MODEL = 'google/gemma-4-31b-it:free'
@@ -46,16 +45,13 @@ def redact(text):
     return text
 
 
-def recent_ask_times():
-    minute_ago = time.time() - 60
-    return [asked for asked in session.get('assistant_times', []) if asked > minute_ago]
-
-
 def assistant_page(answer=None, question=None, error=None):
     return render_template('assistant.html', answer=answer, question=question, error=error)
 
 
 @assistant.route('/assistant', methods=['GET', 'POST'])
+# every question costs money, so one account cannot spend the quota in a loop
+@limiter.limit('5 per minute', key_func=account_key, methods=['POST'])
 @login_required
 def ask():
     if request.method == 'GET':
@@ -68,14 +64,6 @@ def ask():
     if len(question) > MAX_QUESTION:
         return assistant_page(error='Questions can be at most %d characters.' % MAX_QUESTION,
                               question=question), 400
-
-    asked = recent_ask_times()
-    # every question costs money, so one account cannot spend the quota in a loop
-    if len(asked) >= MAX_PER_MINUTE:
-        return assistant_page(error='Too many questions. Wait a minute and try again.', question=question), 429
-
-    asked.append(time.time())
-    session['assistant_times'] = asked
 
     try:
         client = OpenAI(base_url='https://openrouter.ai/api/v1', api_key=os.environ['OPENROUTER_API_KEY'])
