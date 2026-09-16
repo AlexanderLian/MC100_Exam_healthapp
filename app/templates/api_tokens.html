@@ -21,4 +21,12 @@
     <form method="post" action="{{ url_for('auth.api_tokens') }}">
         <button type="submit">Generate new token</button>
     </form>
+
+    {% if session.role == 'patient' %}
+        <p>A patient token reads your own appointments.</p>
+    {% elif session.role == 'clinician' %}
+        <p>A clinician token reads your patients and their journal notes, and writes new notes.</p>
+    {% else %}
+        <p>An administrator token reaches no clinical data.</p>
+    {% endif %}
 {% endblock %}

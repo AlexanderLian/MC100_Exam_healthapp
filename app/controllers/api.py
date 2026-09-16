@@ -16,7 +16,8 @@ def api_key_required(role):
         # lab_7 leaves @wraps out, and then a second route overwrites the first
         @functools.wraps(view)
         def wrapped(*args, **kwargs):
-            # the header only, never the query string, or the token lands in server logs
+            # header only. A cookie would let another site call this, and a query
+            # string would put the token in server logs
             token = request.headers.get('X-API-Key', '')
             user = models.get_user_by_api_token(token) if token else None
             if user is None:
@@ -30,19 +31,27 @@ def api_key_required(role):
                                      user['id'], user['role'], request.method, request.path, kwargs.get('patient_id'))
                 return jsonify({'error': 'Not found'}), 404
 
-            # g, the same way lab_4 carries the authenticated user
             g.user = user
             return view(*args, **kwargs)
         return wrapped
     return decorator
 
 
-# the API never reads the session cookie, so another site cannot call it with the browser's login
 @api.route('/api/patients')
 @api_key_required('clinician')
 def patient_list():
     patients = models.get_patients_for_clinician(g.user['id'])
     return jsonify({'patients': [{'id': p['id'], 'full_name': p['full_name']} for p in patients]})
+
+
+@api.route('/api/appointments')
+@api_key_required('patient')
+def own_appointments():
+    # the patient comes from the token, so there is no id in the request to change
+    appointments = models.get_appointments_for_patient(g.user['id'])
+    # named fields, so a column added to the query later is not published by accident
+    return jsonify({'appointments': [{'slot_start': a['slot_start'], 'clinician': a['full_name']}
+                                     for a in appointments]})
 
 
 @api.route('/api/patients/<int:patient_id>/notes')
@@ -52,7 +61,8 @@ def patient_notes(patient_id):
         return jsonify({'error': 'Not found'}), 404
 
     notes = models.get_notes_for_clinician(patient_id, g.user['id'])
-    return jsonify({'notes': [dict(note) for note in notes]})
+    return jsonify({'notes': [{'id': n['id'], 'body': n['body'], 'created_at': n['created_at'],
+                               'author_name': n['author_name']} for n in notes]})
 
 
 @api.route('/api/patients/<int:patient_id>/notes', methods=['POST'])
@@ -67,7 +77,7 @@ def create_patient_note(patient_id):
 
     # a number or a list would crash .strip(), and a bad request should answer 400 and not 500
     if not isinstance(body, str):
-        return jsonify({'error': 'The note is empty.'}), 400
+        return jsonify({'error': 'The note must be text.'}), 400
 
     body = body.strip()
     if not body:
