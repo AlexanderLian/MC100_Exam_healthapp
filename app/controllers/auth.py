@@ -62,8 +62,10 @@ def register():
         error = 'Enter a valid email address.'
     elif not full_name:
         error = 'Enter your full name.'
-    elif password_length < 8 or password_length > 72:
-        error = 'Password must be between 8 and 72 bytes.'
+    elif password_length < 8:
+        error = 'Password must be at least 8 characters.'
+    elif password_length > 72:
+        error = 'Password is too long.'
     # [0-9] not \d, because \d also matches Arabic-Indic digits
     elif not re.fullmatch(r'[0-9]{11}', national_id):
         error = 'National ID must be 11 digits.'
@@ -101,6 +103,45 @@ def login():
     session['user_id'] = user['id']
     session['role'] = user['role']
     return redirect(url_for('index'))
+
+
+@auth.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'GET':
+        return render_template('forgot_password.html')
+
+    email = request.form.get('email', '').strip().lower()
+    token = models.create_reset_token(email)
+    if token is not None:
+        # not shown on the page, or anyone who types an email could reset that account
+        print('RESET TOKEN for %s: %s' % (email, token))
+        print('(this would be emailed in production, see README)')
+
+    # same page for every email, so the form does not tell who has an account
+    return render_template('reset_password.html', message='If that email is registered, a reset code has been sent.')
+
+
+@auth.route('/reset-password', methods=['GET', 'POST'])
+def reset_password():
+    if request.method == 'GET':
+        return render_template('reset_password.html')
+
+    token = request.form.get('token', '').strip()
+    password = request.form.get('password', '')
+
+    # checked before the token, so a typo in the password does not use up the token
+    password_length = len(password.encode('utf-8'))
+    if password_length < 8:
+        return render_template('reset_password.html', error='Password must be at least 8 characters.'), 400
+    # bytes not characters, because æ ø å are two bytes each and bcrypt refuses more than 72
+    if password_length > 72:
+        return render_template('reset_password.html', error='Password is too long.'), 400
+
+    if not models.reset_password(token, password):
+        # one message for unknown, expired and used, so the page does not say which
+        return render_template('reset_password.html', error='That reset code is not valid or has expired.'), 401
+
+    return redirect(url_for('auth.login'))
 
 
 # GET for now, becomes POST when CSRF protection goes in

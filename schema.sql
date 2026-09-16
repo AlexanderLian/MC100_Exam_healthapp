@@ -73,8 +73,8 @@ CREATE TABLE IF NOT EXISTS documents (
 
 
 -- Time-limited, single-use, bound to one user. Only the hash is stored, so a
--- database leak does not hand out working reset links. A password change
--- deletes every outstanding row for that user.
+-- database leak does not hand out working reset links. A reset sets used_at
+-- on its own row and deletes the user's other unused rows.
 CREATE TABLE IF NOT EXISTS reset_tokens (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id    INTEGER NOT NULL REFERENCES users(id),

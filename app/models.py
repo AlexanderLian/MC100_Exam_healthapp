@@ -1,4 +1,6 @@
+import hashlib
 import os
+import secrets
 import sqlite3
 from datetime import datetime, timezone
 
@@ -96,6 +98,67 @@ def verify_login(email, password):
     if bcrypt.checkpw(password_bytes, user['password_hash'].encode('utf-8')):
         return user
     return None
+
+
+# sha256 is enough here, the token is 32 random bytes so there is nothing to guess
+def hash_token(token):
+    return hashlib.sha256(token.encode('utf-8')).hexdigest()
+
+
+# secrets not random, a reset token has to be impossible to predict
+def generate_reset_token():
+    return secrets.token_hex(32)
+
+
+# returns None for an unknown email, the route shows the same page either way
+def create_reset_token(email):
+    user = get_user_by_email(email)
+    if user is None:
+        return None
+
+    token = generate_reset_token()
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        # datetime() gives the same text format as now(), so expires_at compares right
+        cursor.execute(
+            "INSERT INTO reset_tokens (user_id, token_hash, expires_at) VALUES (?, ?, datetime(?, '+30 minutes'))",
+            (user['id'], hash_token(token), now())
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return token
+
+
+def reset_password(token, new_password):
+    token_hash = hash_token(token)
+    # bcrypt is slow, so hash first and keep the database lock short
+    password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt(rounds=BCRYPT_ROUNDS))
+    current_time = now()
+
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        # check and claim in one statement, so two requests cannot both use the same token
+        cursor.execute(
+            'UPDATE reset_tokens SET used_at = ? WHERE token_hash = ? AND used_at IS NULL AND expires_at > ?',
+            (current_time, token_hash, current_time)
+        )
+        if cursor.rowcount != 1:
+            return False
+
+        # the user id comes from the token row, the form never says who to reset
+        cursor.execute('SELECT user_id FROM reset_tokens WHERE token_hash = ?', (token_hash,))
+        user_id = cursor.fetchone()['user_id']
+
+        cursor.execute('UPDATE users SET password_hash = ? WHERE id = ?', (password_hash.decode('utf-8'), user_id))
+        # the used row has to stay, or used_at stops blocking reuse
+        cursor.execute('DELETE FROM reset_tokens WHERE user_id = ? AND used_at IS NULL', (user_id,))
+        conn.commit()
+    finally:
+        conn.close()
+    return True
 
 
 def get_patients_for_clinician(clinician_id):
