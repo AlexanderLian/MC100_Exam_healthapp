@@ -105,8 +105,8 @@ def hash_token(token):
     return hashlib.sha256(token.encode('utf-8')).hexdigest()
 
 
-# secrets not random, a reset token has to be impossible to predict
-def generate_reset_token():
+# secrets not random, a token anyone can guess is not a token
+def generate_token():
     return secrets.token_hex(32)
 
 
@@ -116,7 +116,7 @@ def create_reset_token(email):
     if user is None:
         return None
 
-    token = generate_reset_token()
+    token = generate_token()
     conn = get_connection()
     try:
         cursor = conn.cursor()
@@ -159,6 +159,53 @@ def reset_password(token, new_password):
     finally:
         conn.close()
     return True
+
+
+# one row per user, so a new token replaces the old one (Assignment 2 does the same)
+def create_api_token(user_id):
+    token = generate_token()
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT OR REPLACE INTO api_tokens (user_id, token_hash, token_prefix, expires_at)"
+            " VALUES (?, ?, ?, datetime(?, '+30 days'))",
+            (user_id, hash_token(token), token[:4], now())
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return token
+
+
+# the prefix and the dates only, the page has nothing to leak
+def get_api_token(user_id):
+    conn = get_connection()
+    row = conn.execute('SELECT token_prefix, created_at, expires_at FROM api_tokens WHERE user_id = ?', (user_id,)).fetchone()
+    conn.close()
+    return row
+
+
+def delete_api_token(user_id):
+    conn = get_connection()
+    try:
+        conn.execute('DELETE FROM api_tokens WHERE user_id = ?', (user_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# the expiry is part of the lookup, so an old token finds no user at all
+def get_user_by_api_token(token):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT u.id, u.email, u.role FROM users u
+          JOIN api_tokens t ON t.user_id = u.id
+         WHERE t.token_hash = ? AND t.expires_at > ?
+    ''', (hash_token(token), now()))
+    user = cursor.fetchone()
+    conn.close()
+    return user
 
 
 def get_patients_for_clinician(clinician_id):

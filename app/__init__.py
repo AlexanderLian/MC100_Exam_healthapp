@@ -6,6 +6,7 @@ from datetime import timedelta
 from flask import Flask, render_template
 
 from app import models
+from app.controllers.api import api
 from app.controllers.auth import auth
 from app.controllers.notes import notes
 
@@ -40,6 +41,7 @@ def create_app():
 
     app.register_blueprint(auth)
     app.register_blueprint(notes)
+    app.register_blueprint(api)
 
     @app.route('/')
     def index():

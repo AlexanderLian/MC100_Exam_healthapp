@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>API token</h1>
+
+    {% if new_token %}
+        <p>New API token: {{ new_token }}</p>
+        <p>Copy it now. It is not shown again.</p>
+    {% elif token_row %}
+        <p>Token: {{ token_row['token_prefix'] }}**** (expires {{ token_row['expires_at'] }})</p>
+    {% else %}
+        <p>You have no API token.</p>
+    {% endif %}
+
+    {% if token_row %}
+        <form method="post" action="{{ url_for('auth.revoke_api_token') }}">
+            <button type="submit">Revoke token</button>
+        </form>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('auth.api_tokens') }}">
+        <button type="submit">Generate new token</button>
+    </form>
+{% endblock %}

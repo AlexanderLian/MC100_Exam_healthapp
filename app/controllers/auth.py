@@ -144,6 +144,25 @@ def reset_password():
     return redirect(url_for('auth.login'))
 
 
+@auth.route('/api-tokens', methods=['GET', 'POST'])
+@login_required
+def api_tokens():
+    if request.method == 'GET':
+        return render_template('api_tokens.html', token_row=models.get_api_token(session['user_id']))
+
+    # shown once here, the database only keeps the hash
+    token = models.create_api_token(session['user_id'])
+    return render_template('api_tokens.html', token_row=models.get_api_token(session['user_id']), new_token=token)
+
+
+@auth.route('/api-tokens/revoke', methods=['POST'])
+@login_required
+def revoke_api_token():
+    # the session decides whose token goes, so there is no id in the form to change
+    models.delete_api_token(session['user_id'])
+    return redirect(url_for('auth.api_tokens'))
+
+
 # GET for now, becomes POST when CSRF protection goes in
 @auth.route('/logout')
 def logout():
