@@ -1,15 +1,14 @@
--- HealthApp - database schema
+-- HealthApp database schema
 -- SQLite. Run by models.init_db() on first start.
 --
 -- SQLite over PostgreSQL: the file is created on first run, so the app works
--- on the examiner's machine with no server or connection string. Cost: SQLite
--- has no database roles, so the app process can reach every table. Recorded
--- in known limitations.
+-- on any machine with no server or connection string. Cost: SQLite has no
+-- database roles, so the app process can reach every table.
 --
 -- All timestamps are TEXT in UTC, written as 'YYYY-MM-DD HH:MM:SS' by
--- models.now(). Never datetime.isoformat() - the 'T' separator sorts above a
--- space, so a mixed-format expires_at compares wrong and an expired token
--- would validate.
+-- models.now(). Never datetime.isoformat(), because its 'T' separator sorts
+-- above a space, so a mixed format expires_at compares wrong and an expired
+-- token would validate.
 
 -- Per-connection, not stored in the file. models.get_connection() sets it on
 -- every connection.
@@ -17,7 +16,7 @@ PRAGMA foreign_keys = ON;
 
 
 -- One table for all three roles. Role is assigned server-side at
--- registration; a role field in the request body is ignored.
+-- registration, and a role field in the request body is ignored.
 CREATE TABLE IF NOT EXISTS users (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     email         TEXT    NOT NULL UNIQUE,
@@ -59,7 +58,7 @@ CREATE TABLE IF NOT EXISTS notes (
 
 
 -- Metadata only. The bytes live in uploads/ under stored_name, which is
--- secrets.token_hex(16) plus a validated extension - that one control answers
+-- secrets.token_hex(16) plus a validated extension. That one control answers
 -- path traversal, collisions, double extensions and null bytes. original_name
 -- is a display label and never touches a path.
 CREATE TABLE IF NOT EXISTS documents (
@@ -84,10 +83,9 @@ CREATE TABLE IF NOT EXISTS reset_tokens (
 );
 
 
--- One token per user, so regenerating replaces the row (Assignment 2 works the
--- same way). Only the hash is stored, like reset_tokens. token_prefix is the
--- first 4 characters, kept so the page can show 85a4**** without holding the
--- token itself.
+-- One token per user, so regenerating replaces the row. Only the hash is
+-- stored, like reset_tokens. token_prefix is the first 4 characters, kept so
+-- the page can show 85a4**** without holding the token itself.
 CREATE TABLE IF NOT EXISTS api_tokens (
     user_id      INTEGER PRIMARY KEY REFERENCES users(id),
     token_hash   TEXT    NOT NULL UNIQUE,

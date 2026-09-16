@@ -13,7 +13,7 @@ security_log = logging.getLogger('healthapp.security')
 
 def api_key_required(role):
     def decorator(view):
-        # lab_7 leaves @wraps out, and then a second route overwrites the first
+        # without wraps every route is named 'wrapped' and Flask refuses the second one
         @functools.wraps(view)
         def wrapped(*args, **kwargs):
             # header only. A cookie would let another site call this, and a query

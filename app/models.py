@@ -15,12 +15,11 @@ BCRYPT_ROUNDS = 12
 
 SLOT_TIMES = ('09:00:00', '13:00:00')
 
-# lab_3's own list. The folder is under the app, not a path from one machine
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+# under the app folder, so it works on any machine
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
 
 
-# the course example raises DoctorUnavailableError, same idea with our names
 class ClinicianUnavailableError(Exception):
     pass
 
@@ -41,7 +40,7 @@ def get_connection():
     return conn
 
 
-# lab_3 makes the folder at startup too, so a fresh copy of the app has somewhere to write
+# uploads/ is not in git, so a fresh copy needs it made
 def init_uploads():
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
@@ -178,7 +177,7 @@ def reset_password(token, new_password):
     return True
 
 
-# one row per user, so a new token replaces the old one (Assignment 2 does the same)
+# one row per user, so a new token replaces the old one
 def create_api_token(user_id):
     token = generate_token()
     conn = get_connection()

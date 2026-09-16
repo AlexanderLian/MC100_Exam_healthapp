@@ -19,7 +19,6 @@ def document_list():
     if request.method == 'GET':
         return documents_page()
 
-    # lab_3 checks both, a form with no file field and a form with an empty one
     if 'document' not in request.files or request.files['document'].filename == '':
         return documents_page('Choose a file.'), 400
 
