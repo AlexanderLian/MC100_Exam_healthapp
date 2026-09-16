@@ -14,6 +14,10 @@ def app(tmp_path, monkeypatch):
     monkeypatch.setenv('SEED_PASSWORD', SEED_PASSWORD)
     monkeypatch.setenv('SESSION_COOKIE_SECURE', 'false')
     monkeypatch.setattr(models, 'DATABASE', str(tmp_path / 'test.db'))
+    # a temp folder, or every test run drops files in the real uploads folder
+    upload_folder = tmp_path / 'uploads'
+    upload_folder.mkdir()
+    monkeypatch.setattr(models, 'UPLOAD_FOLDER', str(upload_folder))
     monkeypatch.setattr(app_package, 'SECURITY_LOG', str(tmp_path / 'security.log'))
     # 4 rounds keeps the suite fast, test_bcrypt_work_factor_is_12 guards the real value
     monkeypatch.setattr(models, 'BCRYPT_ROUNDS', 4)
