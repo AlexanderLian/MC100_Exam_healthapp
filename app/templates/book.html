@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Book an appointment</h1>
+
+    <form method="post" action="{{ url_for('appointments.book') }}">
+        <p>
+            <label for="clinician_id">Clinician</label><br>
+            <select id="clinician_id" name="clinician_id" required>
+                {% for clinician in clinicians %}
+                    <option value="{{ clinician['id'] }}">{{ clinician['full_name'] }}</option>
+                {% endfor %}
+            </select>
+        </p>
+        <p>
+            <label for="slot_start">Time</label><br>
+            <select id="slot_start" name="slot_start" required>
+                {% for slot in slots %}
+                    <option value="{{ slot }}">{{ slot }}</option>
+                {% endfor %}
+            </select>
+        </p>
+        <button type="submit">Book</button>
+    </form>
+
+    <h2>Your appointments</h2>
+    {% if appointments %}
+        <ul>
+            {% for appointment in appointments %}
+                <li>{{ appointment['slot_start'] }} with {{ appointment['full_name'] }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>You have no appointments.</p>
+    {% endif %}
+{% endblock %}

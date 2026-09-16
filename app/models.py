@@ -2,7 +2,7 @@ import hashlib
 import os
 import secrets
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import bcrypt
 
@@ -12,6 +12,13 @@ SCHEMA = os.path.join(BASE_DIR, 'schema.sql')
 
 # 12 rounds is about a quarter second per hash, slow on purpose so guessing is expensive
 BCRYPT_ROUNDS = 12
+
+SLOT_TIMES = ('09:00:00', '13:00:00')
+
+
+# the course example raises DoctorUnavailableError, same idea with our names
+class ClinicianUnavailableError(Exception):
+    pass
 
 # checked against when the email is unknown, so a missing account takes as long as a wrong password
 DUMMY_HASH = bcrypt.hashpw(b'no such user', bcrypt.gensalt(rounds=BCRYPT_ROUNDS))
@@ -206,6 +213,58 @@ def get_user_by_api_token(token):
     user = cursor.fetchone()
     conn.close()
     return user
+
+
+# the page offers this list and the booking checks against the same one, so nothing typed gets through
+def available_slots():
+    today = datetime.now(timezone.utc).date()
+    slots = []
+    # from tomorrow, which also keeps every offered slot in the future
+    for day in range(1, 8):
+        date = (today + timedelta(days=day)).strftime('%Y-%m-%d')
+        for slot_time in SLOT_TIMES:
+            slots.append('%s %s' % (date, slot_time))
+    return slots
+
+
+def get_clinicians():
+    conn = get_connection()
+    clinicians = conn.execute("SELECT id, full_name FROM users WHERE role = 'clinician' ORDER BY full_name").fetchall()
+    conn.close()
+    return clinicians
+
+
+# None for any id that is not a clinician, so a patient id in the form books nothing
+def get_clinician(clinician_id):
+    conn = get_connection()
+    row = conn.execute("SELECT id, full_name FROM users WHERE id = ? AND role = 'clinician'", (clinician_id,)).fetchone()
+    conn.close()
+    return row
+
+
+def get_appointments_for_patient(patient_id):
+    conn = get_connection()
+    appointments = conn.execute('''
+        SELECT ap.slot_start, u.full_name FROM appointments ap
+          JOIN users u ON u.id = ap.clinician_id
+         WHERE ap.patient_id = ?
+         ORDER BY ap.slot_start
+    ''', (patient_id,)).fetchall()
+    conn.close()
+    return appointments
+
+
+def book_appointment(patient_id, clinician_id, slot_start):
+    conn = get_connection()
+    try:
+        conn.execute('INSERT INTO appointments (patient_id, clinician_id, slot_start) VALUES (?, ?, ?)',
+                     (patient_id, clinician_id, slot_start))
+        conn.commit()
+    except sqlite3.IntegrityError:
+        # UNIQUE (clinician_id, slot_start) refuses it, so two requests at once cannot both get the slot
+        raise ClinicianUnavailableError()
+    finally:
+        conn.close()
 
 
 def get_patients_for_clinician(clinician_id):

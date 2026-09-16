@@ -11,6 +11,9 @@
             {% if session.role == 'clinician' %}
                 <a href="{{ url_for('notes.patient_list') }}">My patients</a> |
             {% endif %}
+            {% if session.role == 'patient' %}
+                <a href="{{ url_for('appointments.book') }}">Book appointment</a> |
+            {% endif %}
             <a href="{{ url_for('auth.api_tokens') }}">API token</a> |
             Logged in as user {{ session.user_id }} ({{ session.role }}) |
             <a href="{{ url_for('auth.logout') }}">Log out</a>
