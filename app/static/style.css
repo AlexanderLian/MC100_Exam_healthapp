@@ -1,19 +1,19 @@
 body {
     margin: 0;
     padding: 32px 16px 64px;
-    background: #e6e4de;
-    color: #1b1b19;
+    background: #dcecf4;
+    color: #152229;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: 15px;
 }
 
 a {
-    color: #1b1b19;
+    color: #14719e;
     text-underline-offset: 3px;
 }
 
 a:hover {
-    color: #8a2a1f;
+    color: #0f5a80;
 }
 
 h1 {
@@ -25,10 +25,10 @@ h1 {
 h2 {
     margin: 32px 0 0;
     padding-bottom: 8px;
-    border-bottom: 1px solid #1b1b19;
+    border-bottom: 1px solid #14719e;
     font-size: 13px;
     font-weight: normal;
-    color: #6a6862;
+    color: #5d7280;
 }
 
 input, select, textarea, button {
@@ -41,7 +41,7 @@ input[type=text], input[type=email], input[type=password], select, textarea {
     box-sizing: border-box;
     width: 100%;
     padding: 9px 10px;
-    border: 1px solid #c6c2b9;
+    border: 1px solid #bdd5e2;
     border-radius: 0;
     background: #fff;
 }
@@ -56,30 +56,35 @@ button {
     padding: 0 20px;
     border: none;
     border-radius: 0;
-    background: #1b1b19;
-    color: #fbfaf8;
+    background: #14719e;
+    color: #fff;
     font-weight: 500;
     cursor: pointer;
 }
 
 button:hover {
-    background: #33332f;
+    background: #0f5a80;
 }
 
 button.secondary {
     height: 34px;
     padding: 0 14px;
-    border: 1px solid #c6c2b9;
+    border: 1px solid #14719e;
     background: transparent;
-    color: #1b1b19;
+    color: #14719e;
     font-weight: normal;
+}
+
+button.secondary:hover {
+    background: #14719e;
+    color: #fff;
 }
 
 label {
     display: block;
     margin-bottom: 14px;
     font-size: 13px;
-    color: #6a6862;
+    color: #5d7280;
 }
 
 label input, label select, label textarea {
@@ -89,8 +94,8 @@ label input, label select, label textarea {
 .page {
     max-width: 1120px;
     margin: 0 auto;
-    background: #fbfaf8;
-    border: 1px solid #cdcac2;
+    background: #fdfefe;
+    border: 1px solid #c2dceb;
 }
 
 .topbar {
@@ -100,7 +105,8 @@ label input, label select, label textarea {
     align-items: center;
     gap: 12px;
     padding: 14px 22px;
-    border-bottom: 1px solid #e0ddd6;
+    border-bottom: 1px solid #c9e2ef;
+    background: #eff8fc;
     font-size: 14px;
 }
 
@@ -112,24 +118,24 @@ label input, label select, label textarea {
 }
 
 .topbar nav a {
-    color: #57554f;
+    color: #4d6270;
     text-decoration: none;
 }
 
 .topbar nav a.active {
-    color: #1b1b19;
-    border-bottom: 1px solid #1b1b19;
+    color: #14719e;
+    border-bottom: 1px solid #14719e;
 }
 
 .topbar nav a.brand {
-    color: #1b1b19;
+    color: #14719e;
     font-weight: 500;
 }
 
 .topbar nav.user {
     gap: 16px;
     font-size: 13px;
-    color: #6a6862;
+    color: #5d7280;
 }
 
 .topbar nav.user a {
@@ -165,13 +171,13 @@ main.narrow {
 }
 
 .notice {
-    border-left: 2px solid #1b1b19;
-    background: #f3f1ec;
+    border-left: 2px solid #14719e;
+    background: #eff8fc;
 }
 
 .muted {
     font-size: 13px;
-    color: #6a6862;
+    color: #5d7280;
 }
 
 .mono {
@@ -186,7 +192,7 @@ main.narrow {
     align-items: baseline;
     gap: 8px 20px;
     padding: 13px 0;
-    border-bottom: 1px solid #e0ddd6;
+    border-bottom: 1px solid #e0edf4;
 }
 
 .row + form {
@@ -204,6 +210,6 @@ main.narrow {
 .answer {
     margin-top: 26px;
     padding-top: 20px;
-    border-top: 1px solid #1b1b19;
+    border-top: 1px solid #14719e;
     line-height: 1.65;
 }
