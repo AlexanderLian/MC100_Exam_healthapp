@@ -15,6 +15,10 @@ BCRYPT_ROUNDS = 12
 
 SLOT_TIMES = ('09:00:00', '13:00:00')
 
+# lab_3's own list. The folder is under the app, not a path from one machine
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
+
 
 # the course example raises DoctorUnavailableError, same idea with our names
 class ClinicianUnavailableError(Exception):
@@ -35,6 +39,12 @@ def get_connection():
     conn.execute('PRAGMA foreign_keys = ON')
     conn.row_factory = sqlite3.Row
     return conn
+
+
+# lab_3 makes the folder at startup too, so a fresh copy of the app has somewhere to write
+def init_uploads():
+    if not os.path.exists(UPLOAD_FOLDER):
+        os.makedirs(UPLOAD_FOLDER)
 
 
 def init_db():
@@ -265,6 +275,72 @@ def book_appointment(patient_id, clinician_id, slot_start):
         raise ClinicianUnavailableError()
     finally:
         conn.close()
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+# a random name plus the extension allowed_file() just approved, so nothing typed reaches a path
+def stored_name_for(filename):
+    return '%s.%s' % (secrets.token_hex(16), filename.rsplit('.', 1)[1].lower())
+
+
+def create_document(owner_id, stored_name, original_name, size_bytes):
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute('INSERT INTO documents (owner_id, stored_name, original_name, size_bytes) VALUES (?, ?, ?, ?)',
+                       (owner_id, stored_name, original_name, size_bytes))
+        conn.commit()
+        document_id = cursor.lastrowid
+    finally:
+        conn.close()
+    return document_id
+
+
+def get_documents_for_owner(owner_id):
+    conn = get_connection()
+    documents = conn.execute('''
+        SELECT id, original_name, size_bytes, uploaded_at FROM documents
+         WHERE owner_id = ?
+         ORDER BY uploaded_at DESC, id DESC
+    ''', (owner_id,)).fetchall()
+    conn.close()
+    return documents
+
+
+# the same appointment rule as the notes, inside the query
+def get_documents_for_patient(patient_id, clinician_id):
+    conn = get_connection()
+    documents = conn.execute('''
+        SELECT d.id, d.original_name, d.size_bytes, d.uploaded_at FROM documents d
+         WHERE d.owner_id = ?
+           AND EXISTS (SELECT 1 FROM appointments ap
+                        WHERE ap.patient_id = d.owner_id AND ap.clinician_id = ?)
+         ORDER BY d.uploaded_at DESC, d.id DESC
+    ''', (patient_id, clinician_id)).fetchall()
+    conn.close()
+    return documents
+
+
+# one query for both roles, so no route can forget half of the rule
+def get_document_for_user(document_id, user_id, role):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT d.stored_name, d.original_name FROM documents d
+         WHERE d.id = ?
+           AND (
+                (? = 'patient' AND d.owner_id = ?)
+                OR
+                (? = 'clinician' AND EXISTS (SELECT 1 FROM appointments ap
+                                              WHERE ap.patient_id = d.owner_id AND ap.clinician_id = ?))
+               )
+    ''', (document_id, role, user_id, role, user_id))
+    document = cursor.fetchone()
+    conn.close()
+    return document
 
 
 def get_patients_for_clinician(clinician_id):

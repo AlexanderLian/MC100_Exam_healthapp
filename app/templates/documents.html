@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>My documents</h1>
+
+    <form method="post" action="{{ url_for('documents.document_list') }}" enctype="multipart/form-data">
+        <p>
+            <label for="document">Referral or other document</label><br>
+            <input type="file" id="document" name="document" required>
+        </p>
+        <button type="submit">Upload</button>
+    </form>
+
+    {% if documents %}
+        <ul>
+            {% for document in documents %}
+                <li>
+                    <a href="{{ url_for('documents.download', document_id=document['id']) }}">{{ document['original_name'] }}</a>
+                    ({{ document['size_bytes'] }} bytes, {{ document['uploaded_at'] }})
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>You have no documents.</p>
+    {% endif %}
+
+    <p>Your clinicians can read these. Nobody else can.</p>
+{% endblock %}

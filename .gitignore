@@ -2,8 +2,7 @@
 __pycache__/
 *.pyc
 .env
-uploads/*
-!uploads/.gitkeep
+uploads/
 *.db
 instance/
 .pytest_cache/

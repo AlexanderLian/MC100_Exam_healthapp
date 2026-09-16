@@ -4,6 +4,18 @@
     <h1>Journal notes for {{ patient['full_name'] }}</h1>
     <p><a href="{{ url_for('notes.patient_list') }}">Back to my patients</a></p>
 
+    {% if documents %}
+        <h2>Documents from this patient</h2>
+        <ul>
+            {% for document in documents %}
+                <li>
+                    <a href="{{ url_for('documents.download', document_id=document['id']) }}">{{ document['original_name'] }}</a>
+                    ({{ document['size_bytes'] }} bytes, {{ document['uploaded_at'] }})
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
     <form method="post" action="{{ url_for('notes.patient_notes', patient_id=patient['id']) }}">
         <p>
             <label for="body">New note</label><br>

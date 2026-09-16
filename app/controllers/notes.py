@@ -26,7 +26,9 @@ def patient_notes(patient_id):
         deny(patient_id)
 
     if request.method == 'GET':
-        return render_template('notes.html', patient=patient, notes=models.get_notes_for_clinician(patient_id, clinician_id))
+        return render_template('notes.html', patient=patient,
+                               notes=models.get_notes_for_clinician(patient_id, clinician_id),
+                               documents=models.get_documents_for_patient(patient_id, clinician_id))
 
     body = request.form.get('body', '').strip()
 
@@ -37,7 +39,9 @@ def patient_notes(patient_id):
         error = 'The note can be at most %d characters.' % MAX_NOTE_LENGTH
 
     if error:
-        return render_template('notes.html', patient=patient, notes=models.get_notes_for_clinician(patient_id, clinician_id),
+        return render_template('notes.html', patient=patient,
+                               notes=models.get_notes_for_clinician(patient_id, clinician_id),
+                               documents=models.get_documents_for_patient(patient_id, clinician_id),
                                error=error, body=body), 400
 
     # the insert checks the appointment again, in case it was removed after the check above
