@@ -54,6 +54,20 @@ def create_app():
     app.register_blueprint(documents)
     app.register_blueprint(assistant)
 
+    @app.after_request
+    def security_headers(response):
+        # scripts, styles and images from this site only, and no other site may frame a page
+        response.headers['Content-Security-Policy'] = "default-src 'self'; frame-ancestors 'none'"
+        # the same framing rule for older browsers that ignore frame-ancestors
+        response.headers['X-Frame-Options'] = 'DENY'
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        # urls like /patient/4/notes never go to another site with a link
+        response.headers['Referrer-Policy'] = 'no-referrer'
+        # pages hold health data and tokens, the stylesheet holds nothing private
+        if not request.path.startswith('/static/'):
+            response.headers['Cache-Control'] = 'no-store'
+        return response
+
     @app.errorhandler(429)
     def too_many_requests(error):
         # %r escapes a newline, so a url can never add a fake line to the log
