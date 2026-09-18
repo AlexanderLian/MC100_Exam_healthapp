@@ -3,6 +3,7 @@ import re
 import bcrypt
 from itsdangerous import TimestampSigner
 
+import app as app_package
 from app import models
 
 # each link only shows in one state, so a crashing page cannot pass for either
@@ -79,3 +80,21 @@ def test_register_ignores_role_field(register):
 def test_bcrypt_work_factor_is_12():
     # the fixture lowers the rounds for speed, so nothing else would notice the real value dropping
     assert models.BCRYPT_ROUNDS == 12
+
+
+def security_log():
+    with open(app_package.SECURITY_LOG, encoding='utf-8') as f:
+        return f.read()
+
+
+def test_failed_login_is_logged_with_the_account_id(login):
+    login('patient1', password='not the password')
+    patient_id = models.get_user_by_email('patient1@healthapp.test')['id']
+    assert 'login failed user_id=%d' % patient_id in security_log()
+
+
+def test_failed_login_log_never_holds_what_was_typed(login):
+    login('patient1', password='typed-secret-123')
+    log = security_log()
+    # the line has to be there, or leaving out the password proves nothing
+    assert 'login failed' in log and 'typed-secret-123' not in log and 'patient1@healthapp.test' not in log
