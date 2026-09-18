@@ -98,6 +98,10 @@ def login():
 
     user = models.verify_login(email, password)
     if user is None:
+        account = models.get_user_by_email(email)
+        # the account id and address only, a typed email or password never reaches the log
+        security_log.warning('login failed user_id=%s address=%s',
+                             account['id'] if account else None, request.remote_addr)
         # one message for both failures, so login never says which emails exist
         return render_template('login.html', error='Wrong email or password.', email=email), 401
 
