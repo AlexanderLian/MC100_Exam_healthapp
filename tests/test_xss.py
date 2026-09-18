@@ -8,7 +8,8 @@ def test_script_in_note_is_escaped_on_render(client, login):
     url = '/patient/%d/notes' % models.get_user_by_email('patient1@healthapp.test')['id']
     login('clinician1')
     client.post(url, data={'body': SCRIPT})
-    assert ESCAPED in client.get(url).get_data(as_text=True)
+    page = client.get(url).get_data(as_text=True)
+    assert ESCAPED in page and SCRIPT not in page
 
 
 # a patient controls their own name, and it is rendered on a clinician's page
@@ -21,4 +22,5 @@ def test_script_in_patient_name_is_escaped_on_patient_list(client, login, regist
     conn.commit()
     conn.close()
     login('clinician1')
-    assert ESCAPED in client.get('/patients').get_data(as_text=True)
+    page = client.get('/patients').get_data(as_text=True)
+    assert ESCAPED in page and SCRIPT not in page

@@ -49,9 +49,13 @@ def sent_text(sent):
     return ' '.join(str(message) for call in sent for message in call['messages'])
 
 
-def test_assistant_requires_login(client, fake_model):
-    fake_model()
-    assert ask(client).status_code == 401
+def test_assistant_requires_login(client, login, fake_model):
+    sent = fake_model()
+    refused = ask(client).status_code
+    calls_while_logged_out = len(sent)
+    # the logged-in half shows the route answers, so the 401 means the login check did it
+    login('patient1')
+    assert (refused, calls_while_logged_out, ask(client).status_code) == (401, 0, 200)
 
 
 def test_question_over_the_limit_is_refused(client, login, fake_model):
@@ -112,12 +116,28 @@ def test_api_key_never_reaches_the_page_or_the_log(client, login, fake_model):
 
 
 def test_upstream_failure_shows_a_message(client, login, fake_model):
-    fake_model(error=RuntimeError('connection refused by openrouter'))
+    leaked_key = 'sk-or-v1-leaked-in-an-error'
+    leaked_url = 'https://openrouter.ai/api/v1/chat/completions'
+    fake_model(error=RuntimeError('connection refused by %s with key %s' % (leaked_url, leaked_key)))
     login('patient1')
     response = ask(client)
     page = response.get_data(as_text=True)
+    with open(app_package.SECURITY_LOG, encoding='utf-8') as f:
+        log = f.read()
     # a plain message, never the exception text or a traceback
-    assert response.status_code == 502 and 'Traceback' not in page and 'connection refused' not in page
+    assert (response.status_code == 502 and 'The assistant is not available right now.' in page
+            and 'Traceback' not in page and 'connection refused' not in page
+            and leaked_key not in page and leaked_url not in page)
+    # the failure is logged with the user id only
+    assert 'assistant call failed user_id=' in log and 'connection refused' not in log and leaked_key not in log
+
+
+def test_long_answer_is_cut_to_2000(client, login, fake_model):
+    fake_model(reply='x' * 5000)
+    login('patient1')
+    page = ask(client).get_data(as_text=True)
+    # the answer is shown, just not past the cap
+    assert 'x' * 2000 in page and 'x' * 2001 not in page
 
 
 def test_rate_limit_refuses_the_sixth_question(client, login, fake_model):

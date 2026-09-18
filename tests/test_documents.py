@@ -129,8 +129,9 @@ def test_notes_page_shows_only_that_patients_documents(client, login):
 
 def test_documents_for_patient_needs_an_appointment(client, login):
     upload_as(client, login, 'patient2', filename='theirs.pdf')
+    owner_sees = [d['original_name'] for d in models.get_documents_for_owner(user_id('patient2'))]
     # the file has to exist, or an empty list proves nothing. clinician1 has no appointment with patient2
-    assert models.get_documents_for_patient(user_id('patient2'), user_id('clinician1')) == []
+    assert (owner_sees, models.get_documents_for_patient(user_id('patient2'), user_id('clinician1'))) == (['theirs.pdf'], [])
 
 
 def test_document_metadata_is_stored(client, login):
